@@ -1,4 +1,5 @@
-import {createEvent, createStore} from "effector";
+import {createEvent, createStore, createEffect} from "effector";
+import * as url from "url";
 
 // Standard interface and functions
 export interface Todo {
@@ -38,19 +39,49 @@ type Store = {
     newTodo: string;
 }
 
+// event for set new todo
 export const setNewTodo = createEvent<string>();
+// event for add todo
 export const addTodo = createEvent();
+// event for update
+export const update = createEvent<{ id: number, text: string }>();
+//event for toggle
+export const toggle = createEvent<number>();
+// event for remove
+export const remove = createEvent<number>()
 
+export const loadFx = createEffect(async (url: string) => {
+    const res = await fetch(url)
+        return res.json()
+})
 export default createStore <Store>({
     todos: [],
     newTodo: "",
 })
-    .on(setNewTodo, (state, newTodo) => ({
-    ...state,
-    newTodo,
-    }
-)).on(addTodo, (state) =>({
+    .on(loadFx.doneData, (state, todos) => ({
+            ...state,
+            todos,
+        }
+    ))  .on(setNewTodo, (state, newTodo) => ({
+            ...state,
+            newTodo,
+        }
+    ))
+    .on(addTodo, (state) =>({
     ...state,
     newTodo: "",
     todos: addTodoList(state.todos, state.newTodo),
-}));
+}))
+    .on(update, (state, {id, text}) =>({
+        ...state,
+        newTodo: "",
+        todos: updateTodo(state.todos, id, text),
+    }))
+    .on(toggle, (state, id) =>({
+        ...state,
+        todos: toggleTodo(state.todos, id),
+    }))
+    .on(remove, (state, id) =>({
+        ...state,
+        todos: removeTodo(state.todos, id),
+    }));
